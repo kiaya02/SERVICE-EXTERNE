@@ -1,37 +1,31 @@
 const PDFDocument = require('pdfkit');
 
-/**
- * وظيفة توليد ملف PDF
- */
-const generatePDF = (data, res) => {
-    const doc = new PDFDocument({ margin: 50 });
+const generatePDF = (data) => {
+    return new Promise((resolve, reject) => {
+        const doc = new PDFDocument({ margin: 50 });
+        let buffers = [];
 
-    // إعداد الرد ليكون ملف PDF جاهز للتحميل
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', 'attachment; filename=estimation_report.pdf');
+        doc.on('data', buffers.push.bind(buffers));
+        doc.on('end', () => resolve(Buffer.concat(buffers)));
+        doc.on('error', reject);
 
-    doc.pipe(res);
+        // محتوى الـ PDF
+        doc.fontSize(22).fillColor('#1d4ed8').text('APEX Estimation Report', { align: 'center' });
+        doc.moveDown();
+        doc.fontSize(12).fillColor('black').text(`Category: ${data.category_info.name}`);
+        doc.text(`Date: ${new Date().toLocaleDateString()}`);
+        doc.moveDown();
 
-    // --- محتوى الملف ---
-    doc.fontSize(22).fillColor('#1d4ed8').text('Smart Construction Estimator', { align: 'center' });
-    doc.moveDown();
-    doc.strokeColor('#cccccc').moveTo(50, doc.y).lineTo(550, doc.y).stroke();
-    doc.moveDown();
+        doc.fontSize(14).text('Details:', { underline: true });
+        data.details.forEach(item => {
+            doc.fontSize(10).text(`- [${item.type.toUpperCase()}] ${item.name}: ${item.total_item_dzd.toLocaleString()} DZD`);
+        });
 
-    doc.fontSize(12).fillColor('black').text(`Date: ${new Date().toLocaleDateString()}`);
-    doc.text(`Budget Type: ${data.budget_type.toUpperCase()}`);
-    doc.text(`Exchange Rate: ${data.exchange_rate_used} DZD`);
-    doc.moveDown();
+        doc.moveDown(2);
+        doc.fontSize(16).fillColor('#1d4ed8').text(`Grand Total: ${data.summary.grand_total.toLocaleString()} DZD`, { align: 'right' });
 
-    doc.fontSize(16).text('Détails des Matériaux:', { underline: true });
-    data.detail_materiaux.forEach(mat => {
-        doc.fontSize(11).text(`- ${mat.material_name}: ${mat.subtotal_dzd} DZD`);
+        doc.end();
     });
-
-    doc.moveDown();
-    doc.fontSize(18).fillColor('#1d4ed8').text(`Total Global: ${data.total_budget_dzd} DZD`, { align: 'right' });
-
-    doc.end();
 };
 
 module.exports = { generatePDF };

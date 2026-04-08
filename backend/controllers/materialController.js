@@ -1,7 +1,7 @@
-const materialService = require('../../services/materialService');
-const supabase = require('../supabaseClient'); // تأكدي من المسار الصحيح
+const materialService = require('../services/materialService');
+const supabase = require('../supabaseClient'); 
 
-// 1. جلب كل المواد (متوافق مع جدولك بـ 48 مادة)
+// 1. جلب كل المواد
 const getAllMaterials = async (req, res) => {
     try {
         const materials = await materialService.getAllMaterials();
@@ -11,7 +11,7 @@ const getAllMaterials = async (req, res) => {
     }
 };
 
-// 2. إضافة مادة جديدة إلى جدول resource_catalog
+// 2. إضافة مادة جديدة
 const addMaterial = async (req, res) => {
     try {
         const newMaterial = req.body;
@@ -26,7 +26,7 @@ const addMaterial = async (req, res) => {
     }
 };
 
-// 3. تعديل مادة (مثلاً تحديث سعر الإسمنت)
+// 3. تعديل مادة (تم تصحيح الحقل هنا)
 const updateMaterial = async (req, res) => {
     try {
         const { id } = req.params;
@@ -34,7 +34,7 @@ const updateMaterial = async (req, res) => {
         const { data, error } = await supabase
             .from('resource_catalog')
             .update(updatedData)
-            .eq('id', id);
+            .eq('material_id', id); // تم التغيير من id إلى material_id
 
         if (error) throw error;
         res.status(200).json({ success: true, data });
@@ -43,14 +43,14 @@ const updateMaterial = async (req, res) => {
     }
 };
 
-// 4. حذف مادة
+// 4. حذف مادة (صحيحة)
 const deleteMaterial = async (req, res) => {
     try {
         const { id } = req.params;
         const { error } = await supabase
             .from('resource_catalog')
             .delete()
-            .eq('id', id);
+            .eq('material_id', id);
 
         if (error) throw error;
         res.status(200).json({ success: true, message: "Material deleted" });

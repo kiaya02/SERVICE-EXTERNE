@@ -1,21 +1,22 @@
-const supabase = require('../../supabaseClient');
+const supabase = require('../supabaseClient');
 
 // 1. جلب الإعدادات الحالية
 const getSettings = async (req, res) => {
     try {
         const { data, error } = await supabase
-            .from('settings')
+            .from('financial_settings')
             .select('*')
-            .single(); // نجلب سطر واحد فقط يحتوي على كل الإعدادات
+            .limit(1) // نجيبو أول سطر موجود
+            .single();
 
-        if (error) {
-            // إذا لم يوجد جدول بعد، نرسل القيم الافتراضية التي اتفقنا عليها
+        if (error || !data) {
+            // إذا كان الجدول فارغ أو فيه خطأ، نبعتو قيم افتراضية
             return res.status(200).json({
                 success: true,
                 data: {
-                    black_market_factor: 1.7,
+                    market_factor: 1.7,
                     usd_to_dzd_base: 225.31,
-                    default_vat: 0.19 // ضريبة القيمة المضافة مثلاً
+                    tax_rate: 0.19 
                 }
             });
         }
@@ -29,10 +30,23 @@ const getSettings = async (req, res) => {
 const updateSettings = async (req, res) => {
     try {
         const updatedData = req.body;
+
+        // أولاً: لازم نجيبو الـ config_id تاع السطر الوحيد اللي كاين
+        const { data: currentSettings } = await supabase
+            .from('financial_settings')
+            .select('config_id')
+            .limit(1)
+            .single();
+
+        if (!currentSettings) {
+            return res.status(404).json({ success: false, message: "No settings found to update. Please add a row in Supabase first." });
+        }
+
         const { data, error } = await supabase
-            .from('settings')
+            .from('financial_settings')
             .update(updatedData)
-            .eq('id', 1); // نحدث الإعدادات في السطر رقم 1 دائماً
+            .eq('config_id', currentSettings.config_id) // نستعملو الـ ID الحقيقي ماشي رقم 1
+            .select();
 
         if (error) throw error;
         res.status(200).json({ success: true, message: "Settings updated successfully", data });
