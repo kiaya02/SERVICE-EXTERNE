@@ -1,6 +1,8 @@
  require('dotenv').config();
+ require('./services/cronJobs');
 const express = require('express');
 const cors = require('cors');
+
 
 // استدعاء المسارات (Routes)
 const estimationRoutes = require('./routes/estimations');

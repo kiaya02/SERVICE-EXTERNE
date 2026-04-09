@@ -1,16 +1,17 @@
 const supabase = require('../supabaseClient'); 
 const { getExchangeSettings } = require('./exchangeService');
-
+console.log("Type of function:", typeof getExchangeSettings);
 const calculateCategory = async (data) => {
     try {
         const { budget_type, category_name, materials = [], services = [] } = data;
         
         const settings = await getExchangeSettings();
-        if (!settings || !settings.usd_to_dzd_base_rate) {
+        console.log("Settings Received:", settings);
+        if (!settings || !settings.official_rate) {
              throw new Error("Taux de change non disponible");
         }
 
-        const rate = settings.usd_to_dzd_base_rate;
+        const rate = settings.official_rate;
         const marketFactor = settings.market_factor || 1.7; 
 
         const priceKey = budget_type === 'optimiste' ? 'min_price_usd' : 
